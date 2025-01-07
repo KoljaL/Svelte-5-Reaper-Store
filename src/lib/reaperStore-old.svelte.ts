@@ -1,12 +1,11 @@
-import { untrack } from 'svelte';
+// import { tick } from 'svelte';
 
 export class ReaperStore<T> {
 	#key: string;
 	#state: T;
-	#listeners: number = 0; // Tracks active listeners
-	#version = $state(0); // Automatically reactive version counter
-	#proxies = new WeakMap<object, object>(); // To cache proxies for deep reactivity
-	// #value: T | undefined;
+	#listeners: number = 0;
+	#version = $state(0);
+	#proxies = new WeakMap<object, object>();
 
 	// Custom serialization/deserialization methods
 	#serialize: (val: T) => string = JSON.stringify;
@@ -16,7 +15,7 @@ export class ReaperStore<T> {
 	 * Constructor for initializing the store.
 	 * @param key - A unique key for localStorage persistence.
 	 * @param initialValue - The default state value.
-	 * @param options - Optional custom serialization and deserialization methods.
+	 * @param options - Custom serialization and deserialization methods.
 	 */
 	constructor(
 		key: string,
@@ -26,73 +25,50 @@ export class ReaperStore<T> {
 		this.#key = key;
 		// Reactive counter
 		this.#version = 0;
-		// Use the provided or default serialize/deserialize methods
+
 		if (options?.serialize) this.#serialize = options.serialize;
 		if (options?.deserialize) this.#deserialize = options.deserialize;
 
 		try {
-			// Attempt to load the stored value from localStorage
-			untrack(() => {
-				const storedValue = localStorage.getItem(this.#key);
-				if (storedValue !== null) {
-					// Deserialize from localStorage if available
-					this.#state = this.#deserialize(storedValue);
-				} else {
-					// If no stored value, set to the initial value and persist
-					this.#state = initialValue;
-					this.#persistState(initialValue);
-				}
-				window.addEventListener('storage', this.#handleStorageEvent);
-			});
+			const storedValue = localStorage.getItem(this.#key);
+			this.#state = storedValue !== null ? this.#deserialize(storedValue) : initialValue;
+			if (storedValue === null) {
+				localStorage.setItem(this.#key, this.#serialize(initialValue));
+			}
+			// console.info('ReaperStore constructor', this.#key, this.#handleStorageEvent);
+			window.addEventListener('storage', this.#handleStorageEvent);
+			// console.info('ReaperStore constructor', this.#key, window);
 		} catch (error) {
 			console.error(`Failed to initialize store '${this.#key}':`, error);
-			this.#state = initialValue; // Use initial value if deserialization fails
+			this.#state = initialValue;
 		}
-
-		// Sync changes across tabs using storage event listener
-		$effect.root(() => {
-			// console.info('ReaperStore constructor', this.#key, this.#handleStorageEvent);
-			// Only add the event listener when there's an active effect tracking
-			if (this.#listeners === 0) {
-				window.addEventListener('storage', this.#handleStorageEvent);
-			}
-			this.#listeners++;
-
-			return () => {
-				this.#listeners--;
-				if (this.#listeners === 0) {
-					window.removeEventListener('storage', this.#handleStorageEvent);
-				}
-			};
-		});
 	}
 
 	/**
 	 * Reactive getter for accessing the state value.
-	 * Returns the state as a reactive proxy for deep reactivity.
 	 */
 	get value(): T {
-		this.#version;
-		// `$state` makes the state deeply reactive, so no need for proxies
+		// this.#version;
+		// console.info('ReaperStore getter accessed', this.#key, this.#state);
 		return this.#createProxy(this.#state);
-		// return this.#state;
 	}
 
 	/**
 	 * Setter for replacing the entire state and persisting to localStorage.
-	 * @param newValue - The new state value to set.
+	 * @param value - The new state value to be set.
 	 */
 	set value(newValue: T) {
-		this.#state = newValue; // Automatically triggers reactivity with `$state`
-		this.#persistState(newValue); // Persist the updated state to localStorage
-		this.#version += 1; // Reactively update version to trigger any dependent effects
+		this.#state = newValue;
+		this.#persistState(newValue);
+		// Increment a reactive counter
+		this.#version += 1;
 	}
 
 	/**
 	 * Creates a proxy for deeply reactive state, minimizing overhead.
 	 * @param value - The object or array to proxy.
 	 */
-	#createProxy<V extends object | null | undefined>(value: V): V {
+	#createProxy(value: T): T {
 		// console.info('Creating proxy for', this.#key, value);
 		if (typeof value !== 'object' || value === null) return value;
 
@@ -100,7 +76,7 @@ export class ReaperStore<T> {
 			const proxy = new Proxy(value, {
 				get: (target, prop) => {
 					this.#version;
-					// this.#trackListeners();
+					this.#trackListeners();
 					return this.#createProxy(Reflect.get(target, prop));
 				},
 				set: (target, prop, newValue) => {
@@ -122,11 +98,32 @@ export class ReaperStore<T> {
 	 */
 	#persistState(value: T) {
 		try {
-			// Serialize and save the state to localStorage
 			localStorage.setItem(this.#key, this.#serialize(value));
 		} catch (error) {
 			console.error(`Failed to persist store '${this.#key}':`, error);
 		}
+	}
+
+	/**
+	 * Tracks active listeners and manages storage event listeners.
+	 */
+	#trackListeners() {
+		if ($effect.tracking()) {
+			$effect(() => {
+				if (this.#listeners === 0) {
+					window.addEventListener('storage', this.#handleStorageEvent);
+				}
+				this.#listeners++;
+
+				return () => {
+					this.#listeners--;
+					if (this.#listeners === 0) {
+						window.removeEventListener('storage', this.#handleStorageEvent);
+					}
+				};
+			});
+		}
+		// console.info('Listeners:', this.#listeners);
 	}
 
 	/**
@@ -135,16 +132,10 @@ export class ReaperStore<T> {
 	 */
 	#handleStorageEvent = (event: StorageEvent) => {
 		if (event.key === this.#key && event.newValue !== null) {
-			// console.log('storage event', event);
 			try {
 				const newValue = this.#deserialize(event.newValue);
-				if (JSON.stringify(this.#state) !== JSON.stringify(newValue)) {
-					// Only update if the state has actually changed
-					untrack(() => {
-						this.#state = newValue;
-						this.#version += 1; // Trigger reactivity
-					});
-				}
+				this.#state = newValue;
+				this.#version += 1; // Trigger reactivity
 			} catch (error) {
 				console.error(`Failed to handle storage event for '${this.#key}':`, error);
 			}
@@ -152,16 +143,9 @@ export class ReaperStore<T> {
 	};
 
 	/**
-	 * Cleans up event listeners when the store is no longer used.
-	 */
-	destroy() {
-		window.removeEventListener('storage', this.#handleStorageEvent);
-	}
-
-	/**
 	 * Static method to create a `ReaperStore` from `localStorage`.
 	 * @param key - The key in `localStorage`.
-	 * @param options - Optional custom serialization and deserialization methods.
+	 * @param options - Custom serialization and deserialization methods.
 	 * @returns A new `ReaperStore` initialized with the value from `localStorage`, or `null` if the key does not exist.
 	 */
 	static fromLocalStorage<T>(
@@ -188,14 +172,15 @@ export class ReaperStore<T> {
 	/**
 	 * Static method to retrieve all `ReaperStore` instances from `localStorage` with a specific prefix.
 	 * @param prefix - The prefix for store keys in `localStorage`.
-	 * @param options - Optional custom serialization and deserialization methods.
+	 * @param options - Custom serialization and deserialization methods.
 	 * @returns A record of `ReaperStore` instances keyed by their `localStorage` keys.
 	 */
-	static getAll<T>(
+
+	static getAll(
 		prefix: string,
-		options?: { serialize?: (val: T) => string; deserialize?: (val: string) => T }
-	): Record<string, ReaperStore<T>> {
-		const allStores: Record<string, ReaperStore<T>> = {};
+		options?: { serialize?: (val: any) => string; deserialize?: (val: any) => any }
+	): Record<string, ReaperStore<any>> {
+		const allStores: Record<string, ReaperStore<any>> = {};
 
 		for (let i = 0; i < localStorage.length; i++) {
 			const key = localStorage.key(i);
@@ -220,7 +205,7 @@ export class ReaperStore<T> {
 	 * @param prefix - The prefix to prepend to the key.
 	 * @param key - The key for `localStorage`.
 	 * @param initialValue - The initial value for the store state.
-	 * @param options - Optional custom serialization and deserialization methods.
+	 * @param options - Custom serialization and deserialization methods.
 	 * @returns A new `ReaperStore` instance.
 	 */
 	static createWithPrefix<T>(

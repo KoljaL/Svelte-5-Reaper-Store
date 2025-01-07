@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import type { LayoutData } from './$types.js';
+	import ToggleTheme from '$lib/components/ToggleTheme.svelte';
 	let { data, children }: { data: LayoutData; children: Snippet } = $props();
 	import '$lib/style/classless.css';
 	import '$lib/style/app.css';
@@ -17,6 +18,8 @@
 		<a href="{base}/reaper" aria-current={current.route.id === '/reaper'}>Reaper</a>
 		<a href="{base}/rich" aria-current={current.route.id === '/rich'}>Rich</a>
 	</nav>
+	<div class="toggle"></div>
+	<ToggleTheme />
 	<LogLocalStorage />
 </header>
 
@@ -27,16 +30,26 @@
 </footer>
 
 <style>
+	.toggle {
+		grid-area: toggle;
+		display: flex;
+		gap: 1rem;
+	}
 	header {
-		padding: 1rem;
+		display: grid;
+		grid-template-areas: 'h1 loglocal' 'nav toggle';
+		padding: 0.5rem;
 	}
 	h1 {
+		grid-area: h1;
 		margin: 0;
 	}
 
 	nav {
+		grid-area: nav;
 		display: flex;
 		justify-content: left;
+		align-items: end;
 		gap: 1rem;
 		margin-top: 0.5rem;
 	}

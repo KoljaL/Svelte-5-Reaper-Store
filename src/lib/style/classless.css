@@ -44,7 +44,7 @@ html[data-theme='dark'] {
 	--cdark: #888;
 	--clight: #555;
 	--cmed: #666;
-	--clink: #07c;
+	--clink: rgb(138, 188, 224);
 	--cemph: #088;
 	--cemphbg: #0881;
 }

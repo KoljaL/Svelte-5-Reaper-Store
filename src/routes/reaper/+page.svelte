@@ -1,13 +1,11 @@
 <script lang="ts">
-	import type { PageData } from './$types.js';
 	import { ReaperStore } from '$lib/reaperStore.svelte';
 
-	let { data }: { data: PageData } = $props();
+	// import type { PageData } from './$types.js';
+	// let { data }: { data: PageData } = $props();
 
 	const notesStore = ReaperStore.createWithPrefix('myApp', 'notesStore', [
-		{ id: 1, text: 'Note 1' },
-		{ id: 2, text: 'Note 2' },
-		{ id: 3, text: 'Note 3' }
+		{ id: 1, text: 'Note 1' }
 	]);
 	function addNote() {
 		notesStore.value = [
@@ -16,46 +14,39 @@
 		];
 	}
 
-	// Create a ReaperStore instance for user preferences
-	const userPreferences = new ReaperStore('user:preferences', {
-		theme: 'light',
-		fontSize: 16,
-		notifications: true
-	});
-
-	// Synchronize changes for real-time interaction
-	function toggleTheme() {
-		userPreferences.value = {
-			...userPreferences.value,
-			theme: userPreferences.value.theme === 'light' ? 'dark' : 'light'
-		};
-		// toggle data-theme in the document
-		document.documentElement.dataset.theme = userPreferences.value.theme;
-	}
-	$inspect(userPreferences.value);
+	const titleStore = ReaperStore.createWithPrefix('ReaPer:', 'Title', 'Svelte-ReaPer-Store');
+	// let title = $state(titleStore.value);
 </script>
+
+<svelte:head>
+	<title>{titleStore.value}</title>
+</svelte:head>
 
 <h2>Reaper Store</h2>
 
 <p>This is a Library for Svelte 5 to create persistant and reactive stores.</p>
 
-<button onclick={toggleTheme}>
-	{userPreferences.value.theme === 'light' ? 'Switch to Dark' : 'Switch to Light'}
-</button>
-
-<label for="addNote">
-	<button id="addNote" onclick={addNote}>Add Note</button>
-</label>
-
-<pre>
-  {JSON.stringify(notesStore.value, null, 2)}
-</pre>
+<div class="row">
+	<div class="addNote col-5">
+		<button id="addNote" onclick={addNote}>Add Note</button>
+		<pre>
+      {JSON.stringify(notesStore.value, null, 2)}
+    </pre>
+	</div>
+	<div class="changeTitle col-5">
+		<label>
+			Edit page title
+			<input type="text" bind:value={titleStore.value} />
+		</label>
+	</div>
+</div>
 
 <style>
-	label {
-		display: flex;
-		align-items: center;
-		gap: 0.5em;
+	.addNote {
+		padding: 1rem;
+	}
+	.changeTitle {
+		padding: 1rem;
 	}
 	pre {
 		background: var(--cbg);

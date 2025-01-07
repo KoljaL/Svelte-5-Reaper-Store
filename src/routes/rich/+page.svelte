@@ -28,7 +28,7 @@
 
 <h3>Adjust the settings or click the random button</h3>
 
-<button on:click={randomBox}>Random</button>
+<button onclick={randomBox}>Random</button>
 <div class="set">
 	<label>
 		<input type="color" bind:value={box.current.color} />
