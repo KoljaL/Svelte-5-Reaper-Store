@@ -14,7 +14,7 @@ const config = {
 		adapter: adapter()
 	},
 	paths: {
-		base: process.env.NODE_ENV === 'production' ? '/Svelte-ReaPer-Store' : ''
+		base: process.env.NODE_ENV === 'production' ? '/Svelte-5-ReaPer-Store' : ''
 	}
 };
 
