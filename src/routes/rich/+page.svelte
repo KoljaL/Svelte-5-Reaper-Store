@@ -1,13 +1,12 @@
 <script lang="ts">
-	import type { PageData } from './$types.js';
-
-	let { data }: { data: PageData } = $props();
+	// import type { PageData } from './$types.js';
+	// let { data }: { data: PageData } = $props();
 
 	import { LocalStorage } from './rich.svelte';
 
 	const box = new LocalStorage('box', {
 		color: '#ff3e00',
-		dimensions: [10, 10]
+		dimensions: [100, 200]
 	});
 
 	function randomBox() {
@@ -37,12 +36,12 @@
 
 	<label>
 		<input type="range" bind:value={box.current.dimensions[0]} min={100} max={500} />
-		width
+		width: {box.current.dimensions[0]}
 	</label>
 
 	<label>
-		<input type="range" bind:value={box.current.dimensions[1]} min={100} max={500} />
-		height
+		<input type="range" bind:value={box.current.dimensions[1]} min={200} max={500} />
+		height: {box.current.dimensions[1]}
 	</label>
 </div>
 

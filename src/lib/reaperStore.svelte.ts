@@ -23,6 +23,7 @@ export class ReaperStore<T> {
 		initialValue: T,
 		options?: { serialize?: (val: T) => string; deserialize?: (val: string) => T }
 	) {
+		// Store key and initial value
 		this.#key = key;
 		// Reactive counter
 		this.#version = 0;
@@ -30,6 +31,7 @@ export class ReaperStore<T> {
 		if (options?.serialize) this.#serialize = options.serialize;
 		if (options?.deserialize) this.#deserialize = options.deserialize;
 
+		// if (typeof localStorage !== 'undefined') {
 		try {
 			// Attempt to load the stored value from localStorage
 			untrack(() => {
@@ -65,6 +67,7 @@ export class ReaperStore<T> {
 				}
 			};
 		});
+		// }
 	}
 
 	/**
@@ -83,10 +86,19 @@ export class ReaperStore<T> {
 	 * @param newValue - The new state value to set.
 	 */
 	set value(newValue: T) {
-		this.#state = newValue; // Automatically triggers reactivity with `$state`
-		this.#persistState(newValue); // Persist the updated state to localStorage
+		if (typeof localStorage !== 'undefined') {
+			this.#state = newValue; // Automatically triggers reactivity with `$state`
+			this.#persistState(newValue); // Persist the updated state to localStorage
+		}
 		this.#version += 1; // Reactively update version to trigger any dependent effects
 	}
+
+	// set current(value) {
+	// 	if (typeof localStorage !== 'undefined') {
+	// 		localStorage.setItem(this.#key, JSON.stringify(value));
+	// 	}
+	// 	this.#version += 1;
+	// }
 
 	/**
 	 * Creates a proxy for deeply reactive state, minimizing overhead.

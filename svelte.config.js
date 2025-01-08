@@ -8,13 +8,21 @@ const config = {
 	preprocess: vitePreprocess(),
 
 	kit: {
+		// excludes: [
+		// /^[_.]/,
+		// /\.(test|spec)\.js$/,
+		// 'README.md',
+		// ({ basename }) => basename.startsWith('@'),
+		// ({ filepath }) => filepath.includes('rich'),
+		// ({ filepath }) => filepath.includes('routes/reaper')
+		// ],
 		// adapter-auto only supports some environments, see https://svelte.dev/docs/kit/adapter-auto for a list.
 		// If your environment is not supported, or you settled on a specific environment, switch out the adapter.
 		// See https://svelte.dev/docs/kit/adapters for more information about adapters.
-		adapter: adapter()
-	},
-	paths: {
-		base: process.env.NODE_ENV === 'production' ? '/Svelte-5-ReaPer-Store' : ''
+		adapter: adapter(),
+		paths: {
+			base: process.env.NODE_ENV === 'production' ? '/Svelte-5-ReaPer-Store' : ''
+		}
 	}
 };
 

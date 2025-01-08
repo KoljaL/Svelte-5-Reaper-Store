@@ -13,6 +13,7 @@
 
 <header>
 	<h1>Svelte 5 Reaper Store Lib</h1>
+	<h3>Base: {base}</h3>
 	<nav>
 		<a href="{base}/" aria-current={current.route.id === '/'}>Home</a>
 		<a href="{base}/reaper" aria-current={current.route.id === '/reaper'}>Reaper</a>

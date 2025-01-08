@@ -1,12 +1,20 @@
 <script lang="ts">
 	import { ReaperStore } from '$lib/reaperStore.svelte';
 
-	// import type { PageData } from './$types.js';
-	// let { data }: { data: PageData } = $props();
+	// import { onMount } from 'svelte';
+	// let notesStore: ReaperStore<{ id: number; text: string }[]>;
+	// let titleStore: ReaperStore<string> | { value: string };
+	// titleStore = { value: 'Svelte-ReaPer-Store' };
+	// onMount(() => {
+	// 	notesStore = ReaperStore.createWithPrefix('myApp', 'notesStore', [{ id: 1, text: 'Note 1' }]);
+	// 	titleStore = ReaperStore.createWithPrefix('ReaPer:', 'Title', 'Svelte-ReaPer-Store');
+	// });
 
 	const notesStore = ReaperStore.createWithPrefix('myApp', 'notesStore', [
 		{ id: 1, text: 'Note 1' }
 	]);
+	const titleStore = ReaperStore.createWithPrefix('ReaPer:', 'Title', 'Svelte-ReaPer-Store');
+
 	function addNote() {
 		notesStore.value = [
 			...(notesStore.value || []),
@@ -14,12 +22,14 @@
 		];
 	}
 
-	const titleStore = ReaperStore.createWithPrefix('ReaPer:', 'Title', 'Svelte-ReaPer-Store');
 	// let title = $state(titleStore.value);
 </script>
 
+{#await titleStore then titleStore}
+	title: {titleStore.value}
+{/await}
 <svelte:head>
-	<title>{titleStore.value}</title>
+	<title>{titleStore.value || 'Title'}</title>
 </svelte:head>
 
 <h2>Reaper Store</h2>

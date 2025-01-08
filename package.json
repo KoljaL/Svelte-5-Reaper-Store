@@ -4,6 +4,7 @@
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build && npm run package",
+		"try": "vite build && npm run package && vite preview --open",
 		"preview": "vite preview",
 		"package": "svelte-kit sync && svelte-package && publint",
 		"prepublishOnly": "npm run package",
@@ -11,7 +12,9 @@
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"format": "prettier --write .",
 		"lint": "prettier --check . && eslint .",
-		"deploy": "pnpm build && pnpx gh-pages -d build -t true"
+		"deployold": "pnpm build && pnpx gh-pages -d build -t true",
+		"deploy": "pnpm run build && gh-pages -d build",
+		"dp": "git checkout gh-pages && git checkout main -- build/* && git add build && git commit -m 'Copied contents of build folder from main' && git push origin gh-pages"
 	},
 	"files": [
 		"dist",
